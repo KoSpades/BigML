@@ -1,0 +1,4 @@
+venv/
+covid_classifier_model.h5
+input/
+.idea
