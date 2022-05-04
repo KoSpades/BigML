@@ -1,19 +1,8 @@
-import numpy as np
 import pandas as pd
-import os
-import PIL
-import cv2
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import imshow
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import imshow
-import shutil
-from sklearn.metrics import confusion_matrix, classification_report
 
 train_df = pd.read_csv('input/covidx-cxr2/train.txt', sep=" ", header=None)
 train_df.columns = ['patient id', 'filename', 'class', 'data source']
@@ -32,19 +21,24 @@ print(f"Negative and positive values of train: {train_df['class'].value_counts()
 print(f"Negative and positive values of validation: {valid_df['class'].value_counts()}")
 print(f"Negative and positive values of test: {test_df['class'].value_counts()}")
 
-train_datagen = ImageDataGenerator(rescale = 1./255.,rotation_range = 40, width_shift_range = 0.2, height_shift_range = 0.2,
-                                   shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True, vertical_flip =True)
-test_datagen = ImageDataGenerator(rescale = 1.0/255.)
+train_datagen = ImageDataGenerator(rescale=1./255.,
+                                   rotation_range=40,
+                                   width_shift_range=0.2,
+                                   height_shift_range=0.2,
+                                   shear_range=0.2,
+                                   zoom_range=0.2,
+                                   horizontal_flip=True, vertical_flip=True)
+test_datagen = ImageDataGenerator(rescale=1.0/255.)
 
 train_gen = train_datagen.flow_from_dataframe(dataframe=train_df, directory=train_path, x_col='filename',
                                               y_col='class', target_size=(200,200), batch_size=64,
-                                               class_mode='binary')
+                                              class_mode='binary')
 valid_gen = test_datagen.flow_from_dataframe(dataframe=valid_df, directory=train_path, x_col='filename',
                                              y_col='class', target_size=(200,200), batch_size=64,
-                                            class_mode='binary')
+                                             class_mode='binary')
 test_gen = test_datagen.flow_from_dataframe(dataframe=test_df, directory=test_path, x_col='filename',
                                             y_col='class', target_size=(200,200), batch_size=64,
-                                             class_mode='binary')
+                                            class_mode='binary')
 
 base_model = tf.keras.applications.ResNet50V2(weights='imagenet',
                                               input_shape=(200, 200, 3),
@@ -62,7 +56,7 @@ model = tf.keras.Sequential([
 ])
 
 callbacks = [
-    tf.keras.callbacks.ModelCheckpoint("covid_classifier_model.h5", save_best_only=True, verbose = 0),
+    tf.keras.callbacks.ModelCheckpoint("covid_classifier_model.h5", save_best_only=True, verbose=0),
     tf.keras.callbacks.EarlyStopping(patience=3, monitor='val_loss', verbose=1),
     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1)
 ]
