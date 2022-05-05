@@ -6,11 +6,14 @@ from tensorflow import keras
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 
+num_samples = 5000
+train_size = 0.9
+
 train_df = pd.read_csv('input/covidx-cxr2/train.txt', sep=" ", header=None)
 train_df.columns = ['patient id', 'filename', 'class', 'data source']
 train_df = train_df.drop(['patient id', 'data source'], axis=1)
 
-train_df = train_df.sample(n=1000, random_state=0)
+train_df = train_df.sample(n=num_samples, random_state=0)
 
 test_df = pd.read_csv('input/covidx-cxr2/test.txt', sep=" ", header=None)
 test_df.columns = ['id', 'filename', 'class', 'data source']
@@ -19,10 +22,10 @@ test_df = test_df.drop(['id', 'data source'], axis=1)
 train_path = 'input/covidx-cxr2/train/'
 test_path = 'input/covidx-cxr2/test/'
 
-train_df, valid_df = train_test_split(train_df, train_size=0.9, random_state=0)
+train_df, valid_df = train_test_split(train_df, train_size=train_size, random_state=0)
 
 print(f"Negative and positive values of train: {train_df['class'].value_counts()}")
-# print(f"Negative and positive values of validation: {valid_df['class'].value_counts()}")
+print(f"Negative and positive values of validation: {valid_df['class'].value_counts()}")
 print(f"Negative and positive values of test: {test_df['class'].value_counts()}")
 
 # Now we create the train_data and train_label that will be used for ImageDataGenerator.flow
@@ -31,6 +34,9 @@ train_label = list()
 
 valid_data = list()
 valid_label = list()
+
+test_data = list()
+test_label = list()
 
 for _, row in train_df.iterrows():
     file_path = "input/covidx-cxr2/train/" + row["filename"]
@@ -54,11 +60,25 @@ for _, row in valid_df.iterrows():
     else:
         valid_label.append(0)
 
-train_data = np.asarray(train_data).reshape(900, 200, 200, 3)
+for _, row in test_df.iterrows():
+    file_path = "input/covidx-cxr2/test/" + row["filename"]
+    cur_image = Image.open(file_path).convert('RGB')
+    image_resized = cur_image.resize((200, 200))
+    img_data = np.array(image_resized)
+    test_data.append(img_data)
+    if row["class"] == "positive":
+        test_label.append(1)
+    else:
+        test_label.append(0)
+
+train_data = np.asarray(train_data).reshape(int(num_samples*train_size), 200, 200, 3)
 print(train_data.shape)
 
-valid_data = np.asarray(valid_data).reshape(100, 200, 200, 3)
+valid_data = np.asarray(valid_data).reshape(num_samples-int(num_samples*train_size), 200, 200, 3)
 print(valid_data.shape)
+
+test_data = np.asarray(test_data).reshape(400, 200, 200, 3)
+print(test_data.shape)
 
 train_datagen = ImageDataGenerator(rescale=1./255.,
                                    rotation_range=40,
@@ -72,6 +92,7 @@ test_datagen = ImageDataGenerator(rescale=1.0/255.)
 
 train_gen = train_datagen.flow(train_data, train_label, batch_size=32)
 valid_gen = test_datagen.flow(valid_data, valid_label, batch_size=32)
+test_gen = test_datagen.flow(test_data, test_label, batch_size=32)
 
 base_model = tf.keras.applications.ResNet50V2(weights='imagenet',
                                               input_shape=(200, 200, 3),
@@ -103,12 +124,5 @@ history = model.fit(train_gen,
                     validation_data=valid_gen, epochs=5,
                     callbacks=[callbacks])
 
-# valid_gen = test_datagen.flow_from_dataframe(dataframe=valid_df, directory=train_path, x_col='filename',
-#                                              y_col='class', target_size=(200,200), batch_size=64,
-#                                              class_mode='binary')
-# test_gen = test_datagen.flow_from_dataframe(dataframe=test_df, directory=test_path, x_col='filename',
-#                                             y_col='class', target_size=(200,200), batch_size=64,
-#                                             class_mode='binary')
-#
-# model.load_weights('./covid_classifier_model.h5')
-# model.evaluate(test_gen)
+model.load_weights('./covid_classifier_model.h5')
+model.evaluate(test_gen)
