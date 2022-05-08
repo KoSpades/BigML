@@ -1,3 +1,4 @@
+import time
 import pandas as pd
 import numpy as np
 import PIL.Image as Image
@@ -8,6 +9,11 @@ from sklearn.model_selection import train_test_split
 
 num_samples = 5000
 train_size = 0.9
+
+# Initial overhead array
+
+overhead = []
+prev_time = time.time()
 
 train_df = pd.read_csv('input/covidx-cxr2/train.txt', sep=" ", header=None)
 train_df.columns = ['patient id', 'filename', 'class', 'data source']
@@ -80,6 +86,12 @@ print(valid_data.shape)
 test_data = np.asarray(test_data).reshape(400, 200, 200, 3)
 print(test_data.shape)
 
+# Record time
+cur_time = time.time()
+cur_cost = cur_time - prev_time
+overhead.append(cur_cost)
+prev_time = cur_time
+
 train_datagen = ImageDataGenerator(rescale=1./255.,
                                    rotation_range=40,
                                    width_shift_range=0.2,
@@ -120,9 +132,24 @@ model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001),
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
+# Record time
+cur_time = time.time()
+cur_cost = cur_time - prev_time
+overhead.append(cur_cost)
+prev_time = cur_time
+
 history = model.fit(train_gen,
                     validation_data=valid_gen, epochs=1,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
 model.evaluate(test_gen)
+
+# Record time
+cur_time = time.time()
+cur_cost = cur_time - prev_time
+overhead.append(cur_cost)
+prev_time = cur_time
+
+print("Overhead is: ")
+print(overhead)
