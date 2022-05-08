@@ -121,7 +121,7 @@ model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001),
               metrics=['accuracy'])
 
 history = model.fit(train_gen,
-                    validation_data=valid_gen, epochs=5,
+                    validation_data=valid_gen, epochs=1,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
