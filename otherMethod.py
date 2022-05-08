@@ -90,9 +90,9 @@ train_datagen = ImageDataGenerator(rescale=1./255.,
                                    vertical_flip=True)
 test_datagen = ImageDataGenerator(rescale=1.0/255.)
 
-train_gen = train_datagen.flow(train_data, train_label, batch_size=32)
-valid_gen = test_datagen.flow(valid_data, valid_label, batch_size=32)
-test_gen = test_datagen.flow(test_data, test_label, batch_size=32)
+train_gen = train_datagen.flow(train_data, train_label, batch_size=64)
+valid_gen = test_datagen.flow(valid_data, valid_label, batch_size=64)
+test_gen = test_datagen.flow(test_data, test_label, batch_size=64)
 
 base_model = tf.keras.applications.ResNet50V2(weights='imagenet',
                                               input_shape=(200, 200, 3),
