@@ -1,3 +1,4 @@
+import os
 import time
 import pandas as pd
 import numpy as np
@@ -7,7 +8,7 @@ from tensorflow import keras
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 
-num_samples = 5000
+num_samples = 3000
 train_size = 0.9
 
 # Initial overhead array
@@ -122,10 +123,20 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
 
+class EvaluateEpochEnd(tf.keras.callbacks.Callback):
+    def __init__(self, cur_test_data):
+        self.test_data = cur_test_data
+
+    def on_epoch_end(self, epoch, logs={}):
+        scores = self.model.evaluate(self.test_data, verbose=0)
+        print('\nTesting loss: {}, accuracy: {}\n'.format(scores[0], scores[1]))
+
+
 callbacks = [
     tf.keras.callbacks.ModelCheckpoint("covid_classifier_model.h5", save_best_only=True, verbose=0),
     tf.keras.callbacks.EarlyStopping(patience=3, monitor='val_loss', verbose=1),
-    tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1)
+    tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1),
+    EvaluateEpochEnd(test_gen),
 ]
 
 model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001),
@@ -139,7 +150,7 @@ overhead.append(cur_cost)
 prev_time = cur_time
 
 history = model.fit(train_gen,
-                    validation_data=valid_gen, epochs=1,
+                    validation_data=valid_gen, epochs=5,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
@@ -153,3 +164,6 @@ prev_time = cur_time
 
 print("Overhead is: ")
 print(overhead)
+
+if os.path.exists("./covid_classifier_model.h5"):
+    os.remove("./covid_classifier_model.h5")

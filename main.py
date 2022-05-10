@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
@@ -67,7 +68,7 @@ model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001),
               metrics=['accuracy'])
 
 history = model.fit(train_gen,
-                    validation_data=valid_gen, epochs=1,
+                    validation_data=valid_gen, epochs=3,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
