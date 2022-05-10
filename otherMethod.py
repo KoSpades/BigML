@@ -8,7 +8,7 @@ from tensorflow import keras
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 
-num_samples = 3000
+num_samples = 5000
 train_size = 0.9
 
 # Initial overhead array
@@ -150,7 +150,8 @@ overhead.append(cur_cost)
 prev_time = cur_time
 
 history = model.fit(train_gen,
-                    validation_data=valid_gen, epochs=5,
+                    validation_data=valid_gen,
+                    epochs=1,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
