@@ -9,7 +9,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from csv import writer
 
-num_samples = 500
+num_samples = 1000
 train_size = 0.9
 
 # Initial overhead array
@@ -129,16 +129,19 @@ class EvaluateEpochEnd(tf.keras.callbacks.Callback):
         self.test_data = cur_test_data
 
     def on_epoch_end(self, epoch, logs={}):
+        global prev_epoch_time
         scores = self.model.evaluate(self.test_data, verbose=0)
         print('\nTesting loss: {}, accuracy: {}\n'.format(scores[0], scores[1]))
+        cur_epoch_time = time.time()
         with open("ml_acc.csv", 'a+') as f:
             writer_object = writer(f)
-            writer_object.writerow([scores[0], scores[1]])
+            writer_object.writerow([scores[0], scores[1], cur_epoch_time-prev_epoch_time])
+        prev_epoch_time = cur_epoch_time
 
 
 callbacks = [
     tf.keras.callbacks.ModelCheckpoint("covid_classifier_model.h5", save_best_only=True, verbose=0),
-    tf.keras.callbacks.EarlyStopping(patience=4, monitor='val_loss', verbose=1),
+    # tf.keras.callbacks.EarlyStopping(patience=4, monitor='val_loss', verbose=1),
     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1),
     EvaluateEpochEnd(test_gen),
 ]
@@ -153,9 +156,11 @@ cur_cost = cur_time - prev_time
 overhead.append(cur_cost)
 prev_time = cur_time
 
+prev_epoch_time = time.time()
+
 history = model.fit(train_gen,
                     validation_data=valid_gen,
-                    epochs=3,
+                    epochs=4,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
