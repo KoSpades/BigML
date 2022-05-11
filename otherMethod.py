@@ -7,8 +7,9 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
+from csv import writer
 
-num_samples = 5000
+num_samples = 500
 train_size = 0.9
 
 # Initial overhead array
@@ -130,11 +131,14 @@ class EvaluateEpochEnd(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs={}):
         scores = self.model.evaluate(self.test_data, verbose=0)
         print('\nTesting loss: {}, accuracy: {}\n'.format(scores[0], scores[1]))
+        with open("ml_acc.csv", 'a+') as f:
+            writer_object = writer(f)
+            writer_object.writerow([scores[0], scores[1]])
 
 
 callbacks = [
     tf.keras.callbacks.ModelCheckpoint("covid_classifier_model.h5", save_best_only=True, verbose=0),
-    tf.keras.callbacks.EarlyStopping(patience=3, monitor='val_loss', verbose=1),
+    tf.keras.callbacks.EarlyStopping(patience=4, monitor='val_loss', verbose=1),
     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1),
     EvaluateEpochEnd(test_gen),
 ]
@@ -151,7 +155,7 @@ prev_time = cur_time
 
 history = model.fit(train_gen,
                     validation_data=valid_gen,
-                    epochs=1,
+                    epochs=3,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
