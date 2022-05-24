@@ -9,7 +9,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from csv import writer
 
-num_samples = 1000
+num_samples = 3000
 train_size = 0.9
 
 # Initial overhead array
@@ -108,6 +108,9 @@ train_gen = train_datagen.flow(train_data, train_label, batch_size=64)
 valid_gen = test_datagen.flow(valid_data, valid_label, batch_size=64)
 test_gen = test_datagen.flow(test_data, test_label, batch_size=64)
 
+print(type(train_gen))
+print(type(test_gen))
+
 base_model = tf.keras.applications.ResNet50V2(weights='imagenet',
                                               input_shape=(200, 200, 3),
                                               include_top=False)
@@ -160,7 +163,7 @@ prev_epoch_time = time.time()
 
 history = model.fit(train_gen,
                     validation_data=valid_gen,
-                    epochs=4,
+                    epochs=2,
                     callbacks=[callbacks])
 
 model.load_weights('./covid_classifier_model.h5')
